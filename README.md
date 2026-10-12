@@ -34,7 +34,7 @@ If you want to run this project locally on your machine, follow these steps:
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/Omg04/MovieRecommendationSystem.py
+git clone https://github.com/Omg04/MovieRecommendationSystem
 cd MovieRecommendationSystem
 
 ```
@@ -53,24 +53,8 @@ streamlit run app.py
 
 ```
 
-
-
-## ☁️ Deployment
-
-This project can be easily deployed to cloud hosting platforms like **Render**:
-
-1. Connect your GitHub repository to [Render](https://render.com/).
-2. Create a new **Web Service**.
-3. Render will automatically detect the configuration from `render.yaml` or use:
-* **Build Command:** `pip install -r requirements.txt`
-* **Start Command:** `streamlit run app.py`
-
-
-
 ## 👤 Author
 
 * **Omg04** - [GitHub Profile](https://github.com/Omg04)
 
 ---
-
-Would you like to customize any specific sections (like adding screenshots or updating the installation commands) before you paste it into your repo?
