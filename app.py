@@ -1,10 +1,11 @@
 import ast
+import gc
 import pickle
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import streamlit as st
-from nltk.stem.porter import PorterStemmer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -34,7 +35,7 @@ def build_model_files():
     credits = pd.read_csv(base_dir / 'tmdb_5000_credits.csv')
     movies = movies.merge(credits, on='title')
     movies = movies[['movie_id', 'title', 'overview', 'genres', 'keywords', 'cast', 'crew']]
-    movies = movies.dropna().drop_duplicates()
+    movies = movies.dropna().drop_duplicates().reset_index(drop=True)
 
     movies['genres'] = movies['genres'].apply(convert)
     movies['keywords'] = movies['keywords'].apply(convert)
@@ -46,16 +47,15 @@ def build_model_files():
         movies[column] = movies[column].apply(lambda x: [item.replace(' ', '') for item in x])
 
     movies['tags'] = movies['overview'] + movies['genres'] + movies['keywords'] + movies['cast'] + movies['crew']
-    movies_df = movies[['movie_id', 'title', 'tags']].copy()
-    movies_df['tags'] = movies_df['tags'].apply(lambda x: ' '.join(x))
-    movies_df['tags'] = movies_df['tags'].apply(lambda x: x.lower())
+    movies_df = movies[['movie_id', 'title', 'tags']].copy().reset_index(drop=True)
+    movies_df['tags'] = movies_df['tags'].apply(lambda x: ' '.join(x).lower())
 
-    ps = PorterStemmer()
-    movies_df['tags'] = movies_df['tags'].apply(lambda x: ' '.join(ps.stem(word) for word in x.split()))
+    del movies, credits
+    gc.collect()
 
     cv = CountVectorizer(max_features=5000, stop_words='english')
     vectors = cv.fit_transform(movies_df['tags']).toarray()
-    similarity = cosine_similarity(vectors)
+    similarity = cosine_similarity(vectors).astype(np.float32)
 
     with movies_path.open('wb') as movies_file:
         pickle.dump(movies_df, movies_file)
@@ -69,7 +69,7 @@ if not movies_path.exists() or not similarity_path.exists():
     build_model_files()
 
 with movies_path.open('rb') as movies_file:
-    movies_df = pickle.load(movies_file)
+    movies_df = pickle.load(movies_file).reset_index(drop=True)
 with similarity_path.open('rb') as similarity_file:
     similarity = pickle.load(similarity_file)
 
@@ -87,7 +87,7 @@ def recommend(movie):
 
 
 st.title('Movie Recommendation System')
-selected_movie = st.selectbox('Select a movie', movies_list)
+selected_movie = st.selectbox('Select a movie:', movies_list)
 
 if st.button('Recommend'):
     recommendations = recommend(selected_movie)
